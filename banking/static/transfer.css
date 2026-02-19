@@ -1,0 +1,479 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ═══════════════════════════════════════════
+   Rift Pay – Transfer Page  (mobile-first)
+   Dark theme · Optimized widths · Interactive
+   ═══════════════════════════════════════════ */
+
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+    --bg:      #0f172a;
+    --surface: #1e293b;
+    --border:  #334155;
+    --text:    #f1f5f9;
+    --muted:   #94a3b8;
+    --accent:  #6366f1;
+    --accent2: #a78bfa;
+    --green:   #34d399;
+    --red:     #f87171;
+    --orange:  #fb923c;
+    --radius:  14px;
+    --shadow:  0 8px 32px rgba(0,0,0,.35);
+}
+
+html, body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ── App shell ── */
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ── Top Bar ── */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,23,42,.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+}
+.topbar-inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.brand {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -.5px;
+    color: #fff;
+    flex-shrink: 0;
+}
+.brand span { color: var(--accent2); }
+
+.nav {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.nav::-webkit-scrollbar { display: none; }
+.nav-link {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+    transition: color .2s, background .2s, transform .15s;
+}
+.nav-link:hover { color: #fff; background: rgba(255,255,255,.06); transform: translateY(-1px); }
+.nav-link.active { color: #fff; background: rgba(99,102,241,.3); }
+
+.logout-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(248,113,113,.12);
+    color: var(--red);
+    transition: background .2s, transform .15s;
+    margin-left: 6px;
+    text-decoration: none;
+}
+.logout-btn:hover { background: rgba(248,113,113,.22); transform: scale(1.08); }
+.logout-btn:active { transform: scale(.95); }
+
+/* ── Main content area ── */
+.main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px 10px 40px;
+}
+
+/* ── Transfer card ── */
+.transfer-card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    box-shadow: var(--shadow);
+    animation: slideUp .4s cubic-bezier(.22,1,.36,1);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.transfer-header {
+    text-align: center;
+    margin-bottom: 18px;
+}
+.transfer-header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+.transfer-header p {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+/* ── Form structure ── */
+.transfer-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+.form-hint {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 1px;
+}
+
+/* ── Lookup tabs ── */
+.lookup-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 2px;
+}
+.lookup-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 8px 6px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color .2s, background .2s, color .2s, transform .15s, box-shadow .2s;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    font-family: inherit;
+}
+.lookup-tab:hover {
+    border-color: var(--accent);
+    color: var(--accent2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99,102,241,.12);
+}
+.lookup-tab:active { transform: translateY(0) scale(.97); }
+.lookup-tab.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 4px 16px rgba(99,102,241,.3);
+}
+.tab-icon { font-size: 15px; }
+
+/* ── Input fields ── */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    pointer-events: none;
+    transition: color .2s;
+}
+.input-icon.currency {
+    font-weight: 700;
+    color: var(--accent2);
+    font-size: 15px;
+}
+
+/* Highlight icon on focus */
+.input-wrapper:focus-within .input-icon:not(.currency) {
+    color: var(--accent2);
+}
+
+.form-input,
+.form-textarea {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+}
+.form-input:focus,
+.form-textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(99,102,241,.18);
+    background: rgba(15,23,42,.9);
+}
+.form-input:hover:not(:focus):not(:read-only),
+.form-textarea:hover:not(:focus) {
+    border-color: #475569;
+}
+.form-input:read-only {
+    opacity: .65;
+    cursor: not-allowed;
+}
+
+.form-textarea {
+    padding: 10px 12px;
+    resize: vertical;
+    min-height: 64px;
+}
+
+.amount-input { padding-left: 34px; }
+
+/* ── Balance banner ── */
+.balance-banner {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: transform .2s, box-shadow .2s;
+    position: relative;
+    overflow: hidden;
+}
+.balance-banner::before {
+    content: '';
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.07);
+    top: -40px;
+    right: -30px;
+    pointer-events: none;
+}
+.balance-banner:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(99,102,241,.25);
+}
+.balance-banner small {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    opacity: .85;
+}
+.balance-banner strong {
+    font-size: 20px;
+    font-weight: 800;
+}
+
+/* ── Transfer summary ── */
+.transfer-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: border-color .2s;
+}
+.transfer-summary:hover { border-left-color: var(--accent2); }
+.transfer-summary span:last-child {
+    color: var(--accent2);
+    font-weight: 700;
+    font-size: 14px;
+}
+
+/* ── Buttons ── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 18px;
+    cursor: pointer;
+    transition: filter .2s, transform .15s, box-shadow .2s, background .2s, color .2s, border-color .2s;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+.btn--primary {
+    flex: 1;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+}
+.btn--primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.15), transparent);
+    opacity: 0;
+    transition: opacity .2s;
+}
+.btn--primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(99,102,241,.35);
+}
+.btn--primary:hover::after { opacity: 1; }
+.btn--primary:active { transform: translateY(0) scale(.98); box-shadow: none; }
+.btn--primary:disabled { opacity: .5; cursor: wait; transform: none; }
+
+.btn--ghost {
+    flex: 1;
+    background: transparent;
+    color: var(--muted);
+    border: 1.5px solid var(--border);
+}
+.btn--ghost:hover {
+    border-color: var(--muted);
+    color: var(--text);
+    background: rgba(255,255,255,.03);
+    transform: translateY(-1px);
+}
+.btn--ghost:active { transform: translateY(0) scale(.98); }
+
+.btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+/* ── Back link ── */
+.back-link {
+    text-align: center;
+    margin-top: 6px;
+}
+.back-link a {
+    color: var(--accent2);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    transition: color .2s;
+}
+.back-link a:hover { text-decoration: underline; color: #c4b5fd; }
+
+/* ── Alert messages ── */
+.alert {
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.45;
+    animation: fadeIn .3s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.alert strong {
+    display: block;
+    margin-bottom: 2px;
+    font-weight: 600;
+}
+.alert-success {
+    background: rgba(52,211,153,.12);
+    color: var(--green);
+    border: 1px solid rgba(52,211,153,.3);
+}
+.alert-error {
+    background: rgba(248,113,113,.12);
+    color: var(--red);
+    border: 1px solid rgba(248,113,113,.3);
+}
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════ */
+
+/* Small phones */
+@media (max-width: 359px) {
+    .main { padding: 14px 6px 32px; }
+    .transfer-card { padding: 16px 12px; }
+    .transfer-header h1 { font-size: 18px; }
+    .lookup-tab { padding: 7px 4px; font-size: 10px; }
+    .tab-icon { font-size: 14px; }
+    .btn { font-size: 12px; padding: 10px 14px; }
+    .balance-banner strong { font-size: 18px; }
+}
+
+/* Tablets */
+@media (min-width: 640px) {
+    .main { padding: 32px 20px 52px; }
+    .transfer-card { padding: 28px 26px; max-width: 440px; }
+    .transfer-header h1 { font-size: 22px; }
+    .brand { font-size: 20px; }
+    .nav-link { font-size: 13px; padding: 7px 14px; }
+}
+
+/* Desktop */
+@media (min-width: 900px) {
+    .main { padding: 40px 24px 60px; }
+    .transfer-card {
+        max-width: 460px;
+        padding: 32px 30px;
+        border-radius: 18px;
+    }
+    .transfer-header h1 { font-size: 24px; }
+    .transfer-header p { font-size: 13px; }
+    .form-input,
+    .form-textarea { font-size: 14px; padding: 12px 14px 12px 38px; }
+    .form-textarea { padding: 12px 14px; }
+    .amount-input { padding-left: 36px; }
+    .balance-banner strong { font-size: 22px; }
+    .btn { padding: 13px 22px; font-size: 13px; }
+}
+
+/* Wide screens – center card vertically */
+@media (min-width: 1200px) {
+    .main {
+        align-items: center;
+        min-height: calc(100vh - 60px);
+    }
+}

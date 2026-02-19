@@ -1,0 +1,70 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="description" content="Login to your Rift Pay account">
+    <meta name="theme-color" content="#667eea">
+    <title>Rift Pay - Login</title>
+    <link rel="stylesheet" href="{% static 'login.css' %}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1 class="login-title">Rift Pay</h1>
+                <p class="login-subtitle">Welcome Back</p>
+            </div>
+            
+            {% if message %}
+                <div class="login-message {% if 'successful' in message %}success{% else %}error{% endif %}">
+                    {{ message }}
+                </div>
+            {% endif %}
+            
+            <form method="post" class="login-form">
+                {% csrf_token %}
+                
+                <div class="input-wrapper">
+                    <input type="email" id="email" name="email" required placeholder="Enter your email">
+                    <span class="icon"><ion-icon name="mail-outline"></ion-icon></span>
+                    <label for="email" class="form-label">Email Address</label>
+                </div>
+                
+                <div class="input-wrapper">
+                    <input type="password" id="password" name="password" required placeholder="Enter your password">
+                    <span class="icon"><ion-icon name="lock-closed-outline"></ion-icon></span>
+                    <label for="password" class="form-label">Password</label>
+                </div>
+                
+                <div class="remember-me">
+                    <label class="remember-checkbox">
+                        <input type="checkbox" name="remember">
+                        <span>Remember me</span>
+                    </label>
+                </div>
+                
+                <div class="forgot-password">
+                    <a href="#">Forgot Password?</a>
+                </div>
+                
+                <button type="submit" class="login-button">Sign In</button>
+                
+                <div class="signup-link">
+                    <p>Don't have an account? <a href="{% url 'register' %}">Sign up here</a></p>
+                </div>
+            </form>
+        </div>
+        
+        <div class="login-decoration">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+    </div>
+
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</body>
+</html>

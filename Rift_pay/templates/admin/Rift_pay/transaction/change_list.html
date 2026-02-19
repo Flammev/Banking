@@ -1,0 +1,25 @@
+{% extends "admin/change_list.html" %}
+
+{% block content_title %}
+    {{ block.super }}
+    {% if summary %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:14px;margin-bottom:10px;">
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px;">
+            <div style="font-size:12px;color:#6b7280;">Total Transactions</div>
+            <div style="font-size:22px;font-weight:700;">{{ summary.total_transactions }}</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px;">
+            <div style="font-size:12px;color:#6b7280;">Transactions Today</div>
+            <div style="font-size:22px;font-weight:700;">{{ summary.today_transactions }}</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px;">
+            <div style="font-size:12px;color:#6b7280;">Total Volume</div>
+            <div style="font-size:22px;font-weight:700;">{{ summary.total_volume }}</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px;">
+            <div style="font-size:12px;color:#6b7280;">Active Users</div>
+            <div style="font-size:22px;font-weight:700;">{{ summary.active_users_count }}</div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}

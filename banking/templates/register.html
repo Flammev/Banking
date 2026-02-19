@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="description" content="Create your Rift Pay account">
+    <meta name="theme-color" content="#667eea">
+    <title>Rift Pay - Register</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'register.css' %}">   
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-box">
+            <div class="register-header">
+                <h1 class="register-title">Rift Pay</h1>
+                <p class="register-subtitle">Create Your Account</p>
+            </div>
+            
+            <form method="post" class="register-form">
+                {% csrf_token %}
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name" class="form-label">First Name</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="name" name="name" required class="form-input" placeholder="Enter first name">
+                            <span class="icon"><ion-icon name="person-outline"></ion-icon></span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="prenom" class="form-label">Last Name</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="prenom" name="prenom" required class="form-input" placeholder="Enter last name">
+                            <span class="icon"><ion-icon name="person-outline"></ion-icon></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <div class="input-wrapper">
+                        <input type="email" id="email" name="email" required class="form-input" placeholder="Enter your email">
+                        <span class="icon"><ion-icon name="mail-outline"></ion-icon></span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone" class="form-label">Phone Number</label>
+                    <div class="input-wrapper">
+                        <input type="tel" id="phone" name="phone" required class="form-input" placeholder="Enter phone number">
+                        <span class="icon"><ion-icon name="call-outline"></ion-icon></span>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="password" name="password" required class="form-input" placeholder="Create a password">
+                            <span class="icon"><ion-icon name="lock-closed-outline"></ion-icon></span>
+                        </div>
+                        <small class="password-hint">Minimum 8 characters, include numbers and special characters</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirm_password" class="form-label">Confirm Password</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="confirm_password" name="confirm_password" required class="form-input" placeholder="Confirm password">
+                            <span class="icon"><ion-icon name="lock-closed-outline"></ion-icon></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-agreement">
+                    <label class="agree-checkbox">
+                        <input type="checkbox" name="agree_terms" required>&nbsp;
+                        &nbsp;<span>I agree to the Terms & Conditions and Privacy Policy</span>
+                    </label>
+                </div>
+                
+                <button type="submit" class="register-button">Create Account</button>
+                
+                <div class="login-link" >
+                    <p>Already have an account? <a href="{% url 'login' %}">Sign in here</a></p>
+                </div>
+            </form>
+        </div>
+        
+        <div class="register-decoration">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+     </div>
+
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</body>
+</html>

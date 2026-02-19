@@ -1,0 +1,235 @@
+{% load static currency_filters %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="description" content="Rift Pay - Paiements NFC sans contact">
+    <meta name="theme-color" content="#0f172a">
+    <title>Rift Pay - Dashboard</title>
+    <link rel="stylesheet" href="{% static 'home.css' %}?v=2">
+</head>
+<body>
+    <div class="app">
+        <!-- ─── Top Bar ─── -->
+        <header class="topbar">
+            <div class="topbar-inner">
+                <div class="brand">Rift<span>Pay</span></div>
+                <nav class="nav">
+                    <a href="{% url 'home' %}" class="nav-link active">Dashboard</a>
+                    <a href="{% url 'transfer' %}" class="nav-link">Transfert</a>
+                    <a href="{% url 'history' %}" class="nav-link">Historique</a>
+                </nav>
+                <div class="topbar-actions">
+                    <button type="button" class="avatar-btn" id="profileToggle" title="Profil">
+                        <span>{{ user.name|first }}{{ user.prenom|first }}</span>
+                    </button>
+                    <a href="{% url 'logout' %}" class="logout-btn" title="Déconnexion">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <main class="main">
+            {% if message %}
+                <div class="toast toast--success">{{ message }}</div>
+            {% endif %}
+            {% if error %}
+                <div class="toast toast--error">{{ error }}</div>
+            {% endif %}
+
+            <!-- Profile Panel (hidden by default) -->
+            <section class="card-panel profile-panel" id="profilePanel" hidden>
+                <h3>Mon Profil</h3>
+                <form method="post" action="{% url 'update_profile' %}" class="profile-form">
+                    {% csrf_token %}
+                    <div class="form-grid">
+                        <label><small>Nom</small><input type="text" name="name" value="{{ user.name }}" required></label>
+                        <label><small>Prénom</small><input type="text" name="prenom" value="{{ user.prenom }}" required></label>
+                        <label><small>Email</small><input type="email" name="email" value="{{ user.email }}" required></label>
+                        <label><small>Téléphone</small><input type="tel" name="phone" value="{{ user.phone }}" required></label>
+                    </div>
+                    <div class="profile-extra">
+                        <small>N° de compte</small>
+                        <p>{% if account %}{{ account.number }}{% else %}-{% endif %}</p>
+                    </div>
+                    <button type="submit" class="btn btn--primary btn--full">Enregistrer</button>
+                </form>
+            </section>
+
+            <!-- ─── HERO: Card + Balance ─── -->
+            <section class="hero">
+                <!-- NFC Card Visual -->
+                <div class="nfc-card {% if nfc_card %}{{ nfc_card.status|lower }}{% else %}virtual{% endif %}">
+                    <div class="nfc-card__top">
+                        <span class="nfc-card__brand">Rift<span>Pay</span></span>
+                        <svg class="nfc-card__icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                            <path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/>
+                            <path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/>
+                            <path d="M12.91 4.1a16.1 16.1 0 0 1 0 15.8"/>
+                            <path d="M16.37 2a20.16 20.16 0 0 1 0 20"/>
+                        </svg>
+                    </div>
+                    <div class="nfc-card__holder">
+                        <small>Titulaire</small>
+                        <p>{% if user %}{{ user.name }} {{ user.prenom }}{% else %}----{% endif %}</p>
+                    </div>
+                    <div class="nfc-card__bottom">
+                        <div class="nfc-card__num-wrap">
+                            <small>Numéro</small>
+                            <p class="nfc-card__number" id="cardNumber">{% if nfc_card %}{{ nfc_card.nfc_number }}{% else %}NFC ---- ---- ----{% endif %}</p>
+                        </div>
+                        <div class="nfc-card__pill {% if nfc_card %}{{ nfc_card.status|lower }}{% endif %}">
+                            {% if nfc_card %}
+                                {% if nfc_card.status == 'ACTIVE' %}Active
+                                {% elif nfc_card.status == 'ORDERED' %}En cours
+                                {% elif nfc_card.status == 'BLOCKED' %}Bloquée
+                                {% else %}Virtuelle{% endif %}
+                            {% else %}--{% endif %}
+                        </div>
+                    </div>
+                    <button type="button" class="nfc-card__eye" id="cardVisibilityBtn" title="Masquer / Afficher le numéro">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
+
+                <!-- Balance Column -->
+                <div class="balance-col">
+                    <div class="balance-box">
+                        <small>Solde disponible</small>
+                        <h2>{% if account %}{{ account.balance|fcfa }}{% else %}{{ 0|fcfa }}{% endif %}</h2>
+                    </div>
+
+                    {% if nfc_card and nfc_card.status == 'ACTIVE' %}
+                    <div class="stats-row">
+                        <div class="mini-stat">
+                            <small>Dépensé aujourd'hui</small>
+                            <strong>{{ today_spent|fcfa }}</strong>
+                        </div>
+                        <div class="mini-stat">
+                            <small>Limite / jour</small>
+                            <strong>{{ nfc_card.daily_limit|fcfa }}</strong>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="actions-grid">
+                        <a href="{% url 'transfer' %}" class="action-chip"><span class="chip-icon">📤</span> Envoyer</a>
+                        <a href="{% url 'deposit' %}" class="action-chip"><span class="chip-icon">➕</span> Dépôt</a>
+                        <a href="{% url 'withdraw' %}" class="action-chip"><span class="chip-icon">➖</span> Retrait</a>
+                        <a href="{% url 'history' %}" class="action-chip action-chip--outline"><span class="chip-icon">📋</span> Historique</a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ─── NFC Status / Actions (merged from NFC Cards page) ─── -->
+            {% if nfc_card %}
+            <section class="nfc-management">
+                {% if nfc_card.status == 'VIRTUAL' %}
+                <div class="info-banner info-banner--virtual">
+                    <div class="info-banner__icon">💳</div>
+                    <div>
+                        <strong>Carte virtuelle</strong>
+                        <p>Votre numéro NFC a été attribué. Commandez votre carte physique pour payer aux terminaux.</p>
+                    </div>
+                </div>
+                <form method="post" action="{% url 'order_nfc_card' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn--accent btn--full" onclick="return confirm('Commander une carte NFC physique ?')">
+                        📦 Commander ma carte physique
+                    </button>
+                </form>
+
+                {% elif nfc_card.status == 'ORDERED' %}
+                <div class="info-banner info-banner--ordered">
+                    <div class="info-banner__icon">📦</div>
+                    <div>
+                        <strong>Carte en préparation</strong>
+                        <p>Commandée le {{ nfc_card.ordered_at|date:"d/m/Y à H:i" }}. Livraison en cours…</p>
+                    </div>
+                </div>
+
+                {% elif nfc_card.status == 'ACTIVE' %}
+                <div class="detail-chips">
+                    <div class="detail-chip">
+                        <small>Limite / transaction</small>
+                        <strong>{{ nfc_card.per_transaction_limit|fcfa }}</strong>
+                    </div>
+                    <div class="detail-chip">
+                        <small>Activée le</small>
+                        <strong>{{ nfc_card.linked_at|date:"d/m/Y" }}</strong>
+                    </div>
+                </div>
+                <form method="post" action="{% url 'block_nfc_card' nfc_card.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn--danger-outline btn--full" onclick="return confirm('Bloquer cette carte ? Seul un administrateur pourra la réactiver.')">
+                        🔒 Bloquer la carte (Perte / Vol)
+                    </button>
+                </form>
+
+                {% elif nfc_card.status == 'BLOCKED' %}
+                <div class="info-banner info-banner--blocked">
+                    <div class="info-banner__icon">🔒</div>
+                    <div>
+                        <strong>Carte bloquée</strong>
+                        <p>Contactez le support pour réactiver votre carte.</p>
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+            {% endif %}
+
+            <!-- ─── Recent Operations ─── -->
+            <section class="card-panel">
+                <div class="panel-head">
+                    <h3>Dernières opérations</h3>
+                    <a href="{% url 'history' %}" class="see-all">Tout voir →</a>
+                </div>
+
+                <div class="op-list">
+                    {% if recent_operations %}
+                        {% for op in recent_operations %}
+                        <div class="op-item">
+                            <div class="op-icon">{{ op.icon }}</div>
+                            <div class="op-body">
+                                <p class="op-title">{{ op.title }}</p>
+                                <p class="op-date">{{ op.timestamp|date:"d/m/Y H:i" }} · {{ op.status }}</p>
+                            </div>
+                            <div class="op-amount {% if op.amount_prefix == '-' %}expense{% else %}income{% endif %}">
+                                {{ op.amount_prefix }}{{ op.amount|fcfa }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="op-empty">
+                            <p>Aucune opération pour le moment</p>
+                            <a href="{% url 'transfer' %}" class="btn btn--primary btn--sm">Effectuer un transfert</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+    (function(){
+        /* Profile toggle */
+        var tog = document.getElementById('profileToggle');
+        var pan = document.getElementById('profilePanel');
+        if(tog && pan) tog.addEventListener('click', function(){
+            var h = pan.hasAttribute('hidden');
+            h ? pan.removeAttribute('hidden') : pan.setAttribute('hidden','');
+            tog.setAttribute('aria-expanded', String(h));
+        });
+
+        /* Card number blur */
+        var num = document.getElementById('cardNumber');
+        var eye = document.getElementById('cardVisibilityBtn');
+        if(num && eye) eye.addEventListener('click', function(){
+            num.classList.toggle('blurred');
+        });
+    })();
+    </script>
+</body>
+</html>

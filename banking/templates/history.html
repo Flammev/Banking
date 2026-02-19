@@ -1,0 +1,169 @@
+{% load static currency_filters %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="description" content="Historique des transactions - Rift Pay">
+    <meta name="theme-color" content="#0f172a">
+    <title>Historique - Rift Pay</title>
+    <link rel="stylesheet" href="{% static 'history.css' %}?v=2">
+</head>
+<body>
+    <div class="app">
+        <!-- ─── Top Bar ─── -->
+        <header class="topbar">
+            <div class="topbar-inner">
+                <div class="brand">Rift<span>Pay</span></div>
+                <nav class="nav">
+                    <a href="{% url 'home' %}" class="nav-link">Dashboard</a>
+                    <a href="{% url 'transfer' %}" class="nav-link">Transfert</a>
+                    <a href="{% url 'history' %}" class="nav-link active">Historique</a>
+                </nav>
+                <a href="{% url 'logout' %}" class="logout-btn" title="Déconnexion">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                </a>
+            </div>
+        </header>
+
+        <!-- ─── Main Content ─── -->
+        <main class="main">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1>Historique des transactions</h1>
+                <p>Consultez vos transferts et opérations</p>
+            </div>
+
+            <!-- Filter Pills -->
+            <div class="filter-bar">
+                <button class="filter-pill active" data-filter="all">Tout</button>
+                <button class="filter-pill" data-filter="sent">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                    Envoyé
+                </button>
+                <button class="filter-pill" data-filter="received">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                    Reçu
+                </button>
+                <button class="filter-pill" data-filter="deposit">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Dépôt
+                </button>
+                <button class="filter-pill" data-filter="withdraw">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Retrait
+                </button>
+            </div>
+
+            {% if all_operations %}
+            <!-- Transactions List -->
+            <div class="tx-list">
+                {% for operation in all_operations %}
+                <div class="tx-card" data-type="{{ operation.type }}">
+                    <div class="tx-icon {% if operation.type == 'sent' or operation.type == 'withdraw' %}tx-icon--out{% else %}tx-icon--in{% endif %}">
+                        {% if operation.type == 'sent' %}
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                        {% elif operation.type == 'received' %}
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                        {% elif operation.type == 'deposit' %}
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        {% else %}
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        {% endif %}
+                    </div>
+
+                    <div class="tx-body">
+                        <div class="tx-title">{{ operation.title }}</div>
+                        <div class="tx-meta">
+                            <span class="tx-counterparty">{{ operation.counterparty }}</span>
+                            <span class="tx-date">{{ operation.date|date:"d M Y · H:i" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="tx-right">
+                        <div class="tx-amount {% if operation.type == 'sent' or operation.type == 'withdraw' %}expense{% else %}income{% endif %}">
+                            {{ operation.amount_prefix }}{{ operation.amount|fcfa }}
+                        </div>
+                        <div class="tx-status">{{ operation.status }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                    </div>
+                    <small>Total envoyé</small>
+                    <strong class="expense">{{ total_sent|fcfa }}</strong>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                    </div>
+                    <small>Total reçu</small>
+                    <strong class="income">{{ total_received|fcfa }}</strong>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <small>Opérations</small>
+                    <strong>{{ total_count }}</strong>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </div>
+                    <small>Total dépôts</small>
+                    <strong class="income">{{ total_deposit|fcfa }}</strong>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </div>
+                    <small>Total retraits</small>
+                    <strong class="expense">{{ total_withdraw|fcfa }}</strong>
+                </div>
+            </div>
+
+            {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                </div>
+                <h3>Aucune transaction</h3>
+                <p>Vous n'avez pas encore effectué de transactions. Commencez par envoyer ou recevoir de l'argent.</p>
+                <a href="{% url 'transfer' %}" class="btn btn--accent">Effectuer un transfert</a>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+
+    <script>
+        // Filter pills
+        const filterPills = document.querySelectorAll('.filter-pill');
+        const txCards = document.querySelectorAll('.tx-card');
+
+        filterPills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                filterPills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                const filter = pill.dataset.filter;
+
+                txCards.forEach(card => {
+                    if (filter === 'all' || card.dataset.type === filter) {
+                        card.style.display = '';
+                        card.style.animation = 'fadeIn .25s ease';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

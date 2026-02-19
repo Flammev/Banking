@@ -1,0 +1,218 @@
+{% load static currency_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="description" content="Rift Pay - Manage your NFC card">
+    <meta name="theme-color" content="#667eea">
+    <title>Rift Pay - NFC Card</title>
+    <link rel="stylesheet" href="{% static 'nfc_cards.css' %}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header/Navbar -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>Rift Pay</h1>
+                </div>
+                <nav class="nav-menu">
+                    <a href="{% url 'home' %}" class="nav-item">Dashboard</a>
+                    <a href="{% url 'transfer' %}" class="nav-item">Transfer</a>
+                    <a href="{% url 'nfc_cards' %}" class="nav-item active">NFC Card</a>
+                    <a href="{% url 'history' %}" class="nav-item">History</a>
+                    <a href="{% url 'logout' %}" class="nav-item logout">Logout</a>
+                </nav>
+            </div>
+        </header>
+
+        <main class="dashboard-main">
+            <!-- Page Title -->
+            <section class="page-title-section">
+                <div class="page-title-text">
+                    <h2>My NFC Card</h2>
+                    <p>Manage your contactless payment card</p>
+                </div>
+            </section>
+
+            {% if message %}
+                <div class="dashboard-message success">{{ message }}</div>
+            {% endif %}
+            {% if error %}
+                <div class="dashboard-message error">{{ error }}</div>
+            {% endif %}
+
+            {% if nfc_card %}
+            <!-- NFC Card Visual -->
+            <section class="nfc-cards-section">
+                <div class="nfc-card-visual {{ nfc_card.status|lower }}">
+                    <div class="card-visual-top">
+                        <div class="card-visual-logo">Rift Pay</div>
+                        <span class="nfc-status-badge {{ nfc_card.status|lower }}">
+                            {% if nfc_card.status == 'VIRTUAL' %}Virtuelle
+                            {% elif nfc_card.status == 'ORDERED' %}En cours de traitement
+                            {% elif nfc_card.status == 'ACTIVE' %}Active
+                            {% elif nfc_card.status == 'BLOCKED' %}Bloquée
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="card-visual-nfc-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/>
+                            <path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/>
+                            <path d="M12.91 4.1a16.1 16.1 0 0 1 0 15.8"/>
+                            <path d="M16.37 2a20.16 20.16 0 0 1 0 20"/>
+                        </svg>
+                    </div>
+                    <div class="card-visual-number">{{ nfc_card.nfc_number }}</div>
+                    <div class="card-visual-bottom">
+                        <div class="card-visual-holder">{{ user.prenom }} {{ user.name }}</div>
+                        <div class="card-visual-type">
+                            {% if nfc_card.is_physical %}Carte Physique{% else %}Carte Virtuelle{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Card Status & Actions -->
+            <section class="nfc-status-section">
+                {% if nfc_card.status == 'VIRTUAL' %}
+                    <!-- Virtual card – offer to order physical -->
+                    <div class="status-box virtual">
+                        <div class="status-icon">💳</div>
+                        <div class="status-info">
+                            <h3>Carte virtuelle</h3>
+                            <p>Votre numéro de carte NFC a été attribué automatiquement. Pour effectuer des paiements aux terminaux, commandez votre carte physique.</p>
+                        </div>
+                    </div>
+                    <form method="post" action="{% url 'order_nfc_card' %}" class="order-form">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-order" onclick="return confirm('Commander une carte NFC physique ?')">
+                            📦 Commander ma carte physique
+                        </button>
+                    </form>
+
+                {% elif nfc_card.status == 'ORDERED' %}
+                    <!-- Card ordered, waiting for admin to link & deliver -->
+                    <div class="status-box ordered">
+                        <div class="status-icon">📦</div>
+                        <div class="status-info">
+                            <h3>Carte en préparation</h3>
+                            <p>Votre carte physique a été commandée le <strong>{{ nfc_card.ordered_at|date:"d/m/Y à H:i" }}</strong>. Nous procédons à la liaison et à la livraison. Vous serez informé(e) dès qu'elle sera prête.</p>
+                        </div>
+                    </div>
+
+                {% elif nfc_card.status == 'ACTIVE' %}
+                    <!-- Active physical card -->
+                    <div class="status-box active">
+                        <div class="status-icon">✅</div>
+                        <div class="status-info">
+                            <h3>Carte active</h3>
+                            <p>Votre carte physique est liée et prête pour les paiements sans contact.</p>
+                        </div>
+                    </div>
+
+                    <div class="card-details-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Limite journalière</span>
+                            <span class="detail-value">{{ nfc_card.daily_limit|fcfa }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Limite par transaction</span>
+                            <span class="detail-value">{{ nfc_card.per_transaction_limit|fcfa }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Dépensé aujourd'hui</span>
+                            <span class="detail-value">{{ today_spent|fcfa }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Activée le</span>
+                            <span class="detail-value">{{ nfc_card.linked_at|date:"d/m/Y" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="card-actions">
+                        <form method="post" action="{% url 'block_nfc_card' nfc_card.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-warning"
+                                    onclick="return confirm('Bloquer cette carte ? Seul un administrateur pourra la réactiver. Utilisez cette option en cas de perte ou de vol.')">
+                                🔒 Bloquer la carte (Perte / Vol)
+                            </button>
+                        </form>
+                    </div>
+
+                {% elif nfc_card.status == 'BLOCKED' %}
+                    <!-- Blocked card -->
+                    <div class="status-box blocked">
+                        <div class="status-icon">🔒</div>
+                        <div class="status-info">
+                            <h3>Carte bloquée</h3>
+                            <p>Votre carte a été bloquée pour des raisons de sécurité. Veuillez contacter notre support pour la réactiver.</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </section>
+
+            {% else %}
+                <section class="nfc-status-section">
+                    <div class="status-box virtual">
+                        <div class="status-icon">⚠️</div>
+                        <div class="status-info">
+                            <h3>Aucune carte NFC</h3>
+                            <p>Votre compte ne possède pas encore de carte NFC. Veuillez contacter le support.</p>
+                        </div>
+                    </div>
+                </section>
+            {% endif %}
+
+            <!-- Recent NFC Payments -->
+            <section class="nfc-payments-section">
+                <div class="section-header">
+                    <h3>📋 Derniers paiements NFC</h3>
+                </div>
+
+                <div class="payments-list">
+                    {% if recent_payments %}
+                        {% for payment in recent_payments %}
+                            <div class="payment-item {{ payment.status|lower }}">
+                                <div class="payment-info">
+                                    <div class="payment-icon">
+                                        {% if payment.status == 'SUCCESS' %}✅{% elif payment.status == 'DECLINED' %}🚫{% else %}⏳{% endif %}
+                                    </div>
+                                    <div class="payment-details">
+                                        <p class="payment-merchant">
+                                            {% if payment.terminal %}
+                                                {{ payment.terminal.merchant_name }}
+                                            {% else %}
+                                                Terminal inconnu
+                                            {% endif %}
+                                        </p>
+                                        <p class="payment-meta">
+                                            {{ payment.created_at|date:"d/m/Y H:i" }} &bull;
+                                            {{ payment.status }}
+                                        </p>
+                                        {% if payment.decline_reason %}
+                                            <p class="payment-decline-reason">{{ payment.decline_reason }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="payment-amount {% if payment.status == 'SUCCESS' %}debit{% endif %}">
+                                    -{{ payment.amount|fcfa }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-payments">
+                            <p>Aucun paiement NFC pour le moment</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</body>
+</html>

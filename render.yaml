@@ -1,0 +1,57 @@
+databases:
+  - name: riftpay-db
+    plan: free
+    databaseName: banking
+    user: riftpay
+
+services:
+  # ─── Django frontend ───
+  - type: web
+    name: riftpay-django
+    runtime: python
+    plan: free
+    buildCommand: "chmod +x build.sh && ./build.sh"
+    startCommand: "gunicorn banking.wsgi:application --bind 0.0.0.0:$PORT --workers 3"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: riftpay-db
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://riftpay-django.onrender.com"
+      - key: PYTHON_VERSION
+        value: "3.12.3"
+      - key: BLOCKCHAIN_API_BASE_URL
+        value: "https://riftpay-blockchain.onrender.com"
+      - key: BLOCKCHAIN_API_KEY
+        generateValue: true
+      - key: BLOCKCHAIN_WEBHOOK_TOKEN
+        generateValue: true
+
+  # ─── FastAPI blockchain backend ───
+  - type: web
+    name: riftpay-blockchain
+    runtime: python
+    plan: free
+    rootDir: ../back_sec
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn api:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: riftpay-db
+          property: connectionString
+      - key: BACKEND_API_KEY
+        sync: false
+      - key: DJANGO_WEBHOOK_URL
+        value: "https://riftpay-django.onrender.com/webhooks/blockchain/"
+      - key: DJANGO_WEBHOOK_TOKEN
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.12.3"
