@@ -608,6 +608,16 @@ def home(request):
         except Account.DoesNotExist:
             context['user'] = user
             context['account'] = None
+
+    if user and user.last_profile_update:
+        next_allowed = user.last_profile_update + timedelta(days=90)
+        if timezone.now() < next_allowed:
+            context['profile_update_locked'] = True
+            context['next_profile_update'] = next_allowed.strftime('%d/%m/%Y')
+        else:
+            context['profile_update_locked'] = False
+    else:
+        context['profile_update_locked'] = False
     
     return render(request, 'home.html', context)
 
@@ -624,6 +634,15 @@ def update_profile(request):
         user = User.objects.get(user_id=user_id)
     except User.DoesNotExist:
         return redirect('login')
+
+    if user.last_profile_update:
+        next_allowed = user.last_profile_update + timedelta(days=90)
+        if timezone.now() < next_allowed:
+            next_date = next_allowed.strftime('%d/%m/%Y')
+            log_activity(request, action='PROFILE_UPDATE', status='FAILED', user=user,
+                         detail=f'Profile update blocked: next allowed on {next_date}')
+            params = urlencode({'error': f'Vous ne pouvez mettre à jour votre profil qu\'une fois tous les 3 mois. Prochaine mise à jour autorisée le {next_date}.'})
+            return redirect(f"{reverse('home')}?{params}")
 
     name = request.POST.get('name', '').strip()
     prenom = request.POST.get('prenom', '').strip()
@@ -645,7 +664,8 @@ def update_profile(request):
     user.prenom = prenom
     user.email = email
     user.phone = phone
-    user.save(update_fields=['name', 'prenom', 'email', 'phone'])
+    user.last_profile_update = timezone.now()
+    user.save(update_fields=['name', 'prenom', 'email', 'phone', 'last_profile_update'])
     log_activity(request, action='PROFILE_UPDATE', status='SUCCESS', user=user, detail='Profile updated')
 
     request.session['user_email'] = user.email
