@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="description" content="Verify your Rift Pay login">
+    <meta name="theme-color" content="#667eea">
+    <title>Rift Pay - Verify Code</title>
+    <link rel="stylesheet" href="{% static 'login.css' %}">
+    <style>
+        .otp-input {
+            letter-spacing: 0.3em;
+            text-align: center;
+            font-size: 1.4em;
+        }
+        .resend-link {
+            width: 100%;
+            max-width: 300px;
+            text-align: center;
+            margin-top: 12px;
+            font-size: 0.85em;
+            color: #fff;
+        }
+        .resend-link a {
+            color: #fff;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1 class="login-title">Rift Pay</h1>
+                <p class="login-subtitle">Two-Factor Verification</p>
+            </div>
+
+            {% if message %}
+                <div class="login-message error">
+                    {{ message }}
+                </div>
+            {% endif %}
+
+            <p style="color:#fff;font-size:0.85em;text-align:center;margin-bottom:16px;max-width:300px;">
+                A 6-digit verification code has been sent to your email address.
+                Please enter it below.
+            </p>
+
+            <form method="post" class="login-form">
+                {% csrf_token %}
+
+                <div class="input-wrapper">
+                    <input
+                        type="text"
+                        id="otp_code"
+                        name="otp_code"
+                        required
+                        placeholder="000000"
+                        maxlength="6"
+                        pattern="\d{6}"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        class="otp-input"
+                    >
+                    <span class="icon"><ion-icon name="shield-checkmark-outline"></ion-icon></span>
+                    <label for="otp_code" class="form-label">Verification Code</label>
+                </div>
+
+                <button type="submit" class="login-button">Verify</button>
+
+                <div class="signup-link">
+                    <p><a href="{% url 'login' %}">← Back to login</a></p>
+                </div>
+            </form>
+        </div>
+
+        <div class="login-decoration">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+    </div>
+
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</body>
+</html>
