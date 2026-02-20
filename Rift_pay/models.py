@@ -10,6 +10,7 @@ class User(models.Model):
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)
     phone = models.CharField(max_length=20)
+    last_profile_update = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.name} {self.prenom}"

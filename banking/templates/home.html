@@ -45,16 +45,21 @@
                 <form method="post" action="{% url 'update_profile' %}" class="profile-form">
                     {% csrf_token %}
                     <div class="form-grid">
-                        <label><small>Nom</small><input type="text" name="name" value="{{ user.name }}" required></label>
-                        <label><small>Prénom</small><input type="text" name="prenom" value="{{ user.prenom }}" required></label>
-                        <label><small>Email</small><input type="email" name="email" value="{{ user.email }}" required></label>
-                        <label><small>Téléphone</small><input type="tel" name="phone" value="{{ user.phone }}" required></label>
+                        <label><small>Nom</small><input type="text" name="name" value="{{ user.name }}" required {% if profile_update_locked %}disabled{% endif %}></label>
+                        <label><small>Prénom</small><input type="text" name="prenom" value="{{ user.prenom }}" required {% if profile_update_locked %}disabled{% endif %}></label>
+                        <label><small>Email</small><input type="email" name="email" value="{{ user.email }}" required {% if profile_update_locked %}disabled{% endif %}></label>
+                        <label><small>Téléphone</small><input type="tel" name="phone" value="{{ user.phone }}" required {% if profile_update_locked %}disabled{% endif %}></label>
                     </div>
                     <div class="profile-extra">
                         <small>N° de compte</small>
                         <p>{% if account %}{{ account.number }}{% else %}-{% endif %}</p>
                     </div>
-                    <button type="submit" class="btn btn--primary btn--full">Enregistrer</button>
+                    {% if profile_update_locked %}
+                        <p class="profile-lock-notice">Modification disponible le {{ next_profile_update }}</p>
+                        <button type="submit" class="btn btn--primary btn--full" disabled>Enregistrer</button>
+                    {% else %}
+                        <button type="submit" class="btn btn--primary btn--full">Enregistrer</button>
+                    {% endif %}
                 </form>
             </section>
 

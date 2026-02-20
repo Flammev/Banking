@@ -218,6 +218,7 @@ html,body {
 .profile-extra { margin: 8px 0 14px; }
 .profile-extra small { color: var(--muted); font-size: 11px; }
 .profile-extra p { font-weight: 600; margin-top: 2px; }
+.profile-lock-notice { font-size: 12px; color: var(--muted); text-align: center; margin: 6px 0 10px; }
 
 /* ══════════════════════════════════════
    HERO – NFC Card + Balance side-by-side
