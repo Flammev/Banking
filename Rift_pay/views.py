@@ -1,6 +1,7 @@
 import json
 import re
 import uuid
+import secrets
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.db import transaction as db_transaction
@@ -9,12 +10,15 @@ from django.utils.crypto import salted_hmac
 from django.urls import reverse
 from django.conf import settings
 from django.contrib.auth.hashers import make_password, check_password
+from django.core.mail import send_mail
+from django.core.mail import BadHeaderError
+from smtplib import SMTPException
 from django.views.decorators.csrf import csrf_exempt
 from decimal import Decimal
-from datetime import date
+from datetime import date, timedelta
 from urllib.parse import urlencode
 import random
-from .models import User, Transaction, Account, Card, SystemActivity, BlockchainProof, MobileMoneyTransaction, NFCCard, NFCTerminal, NFCPaymentTransaction
+from .models import User, Transaction, Account, Card, SystemActivity, BlockchainProof, MobileMoneyTransaction, NFCCard, NFCTerminal, NFCPaymentTransaction, EmailOTP
 from .services.blockchain_client import sync_transaction, BlockchainSyncError
 from .services.mobile_money_client import initiate_mobile_money_transaction, MobileMoneyAPIError
 
@@ -150,19 +154,74 @@ def login(request):
         try:
             user = User.objects.get(email=email)
             if check_password(password, user.password):
-                # Set session and redirect to home
-                request.session['user_id'] = user.user_id
-                request.session['user_email'] = user.email
-                log_activity(request, action='LOGIN', status='SUCCESS', user=user, detail='User logged in successfully')
-                return redirect('home')
+                # Credentials valid – generate and send OTP
+                expiry_minutes = getattr(settings, 'OTP_EXPIRY_MINUTES', 10)
+                code = f"{secrets.randbelow(1000000):06d}"
+                EmailOTP.objects.create(
+                    user=user,
+                    code=code,
+                    expires_at=timezone.now() + timedelta(minutes=expiry_minutes),
+                )
+                try:
+                    send_mail(
+                        subject='Your Rift Pay verification code',
+                        message=(
+                            f"Hello {user.prenom},\n\n"
+                            f"Your verification code is: {code}\n\n"
+                            f"This code expires in {expiry_minutes} minutes.\n\n"
+                            "If you did not request this, please ignore this email."
+                        ),
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        fail_silently=False,
+                    )
+                except (SMTPException, BadHeaderError, OSError):
+                    log_activity(request, action='LOGIN', status='FAILED', user=user, detail='Failed to send OTP email')
+                    return render(request, 'login.html', {'message': 'Unable to send verification email. Please try again.'})
+
+                # Store user id in session (pending OTP verification)
+                request.session['otp_user_id'] = user.user_id
+                log_activity(request, action='LOGIN', status='SUCCESS', user=user, detail='OTP sent for 2FA')
+                return redirect('verify_otp')
             log_activity(request, action='LOGIN', status='FAILED', user=user, detail='Invalid password')
             return render(request, 'login.html', {'message': 'Invalid email or password'})
         except User.DoesNotExist:
-            # Handle login failure (e.g., show error message)
             log_activity(request, action='LOGIN', status='FAILED', detail=f'Unknown email: {email}')
             return render(request, 'login.html', {'message': 'Invalid email or password'})
-    
+
     return render(request, 'login.html')
+
+
+def verify_otp(request):
+    user_id = request.session.get('otp_user_id')
+    if not user_id:
+        return redirect('login')
+
+    try:
+        user = User.objects.get(user_id=user_id)
+    except User.DoesNotExist:
+        del request.session['otp_user_id']
+        return redirect('login')
+
+    if request.method == 'POST':
+        code = request.POST.get('otp_code', '').strip()
+        otp = (
+            EmailOTP.objects.filter(user=user, code=code, is_used=False, expires_at__gt=timezone.now())
+            .order_by('-created_at')
+            .first()
+        )
+        if otp:
+            otp.is_used = True
+            otp.save()
+            del request.session['otp_user_id']
+            request.session['user_id'] = user.user_id
+            request.session['user_email'] = user.email
+            log_activity(request, action='LOGIN', status='SUCCESS', user=user, detail='2FA verified, user logged in')
+            return redirect('home')
+        log_activity(request, action='LOGIN', status='FAILED', user=user, detail='Invalid or expired OTP')
+        return render(request, 'verify_otp.html', {'message': 'Invalid or expired code. Please try again.'})
+
+    return render(request, 'verify_otp.html')
 
 def transfer(request):
     """Handle transfer data submission"""
