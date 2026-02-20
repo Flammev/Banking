@@ -92,6 +92,7 @@ DATABASES = {
     'default': dj_database_url.config(
         default='postgresql://postgres:Postgre218@localhost:5432/banking',
         conn_max_age=600,
+        conn_health_checks=True,
     )
 }
 
