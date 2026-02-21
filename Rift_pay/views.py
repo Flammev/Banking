@@ -618,11 +618,11 @@ def home(request):
 
             sent_transactions = Transaction.objects.filter(
                 sender=user
-            ).order_by('-timestamp')[:5]
+            ).select_related('receiver').order_by('-timestamp')[:5]
 
             received_transactions = Transaction.objects.filter(
                 receiver=user
-            ).exclude(sender=user).order_by('-timestamp')[:5]
+            ).exclude(sender=user).select_related('sender').order_by('-timestamp')[:5]
 
             mm_transactions = MobileMoneyTransaction.objects.filter(
                 user=user
@@ -1000,11 +1000,11 @@ def history(request):
             
             sent_transactions = Transaction.objects.filter(
                 sender=user
-            ).order_by('-timestamp')
+            ).select_related('receiver').order_by('-timestamp')
             
             received_transactions = Transaction.objects.filter(
                 receiver=user
-            ).order_by('-timestamp')
+            ).select_related('sender').order_by('-timestamp')
 
             mobile_money_transactions = MobileMoneyTransaction.objects.filter(
                 user=user
