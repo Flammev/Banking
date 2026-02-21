@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#0f172a">
+    <title>Transaction – Rift Pay</title>
+    {% load static currency_filters %}
+    <link rel="stylesheet" href="{% static 'transaction_receipt.css' %}?v=1">
+</head>
+<body>
+<div class="app">
+
+    <!-- ─── Top Bar ─── -->
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand">Rift<span>Pay</span></div>
+            <nav class="nav">
+                <a href="{% url 'home' %}" class="nav-link">Dashboard</a>
+                <a href="{% url 'transfer' %}" class="nav-link">Transfert</a>
+                <a href="{% url 'history' %}" class="nav-link">Historique</a>
+            </nav>
+            <a href="{% url 'logout' %}" class="logout-btn" title="Déconnexion">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </a>
+        </div>
+    </header>
+
+    <!-- ─── Main ─── -->
+    <main class="main">
+        <div class="receipt-card">
+
+            <!-- Loading state -->
+            <div class="loading-state" id="loadingState">
+                <div class="spinner-ring"></div>
+                <p class="loading-title">Traitement en cours…</p>
+                <p class="loading-subtitle">Veuillez patienter</p>
+                <div class="loading-steps">
+                    <div class="step active" id="step1">
+                        <div class="step-dot"></div>
+                        <span>Vérification du solde</span>
+                    </div>
+                    <div class="step" id="step2">
+                        <div class="step-dot"></div>
+                        <span>Débit du compte expéditeur</span>
+                    </div>
+                    <div class="step" id="step3">
+                        <div class="step-dot"></div>
+                        <span>Crédit du compte destinataire</span>
+                    </div>
+                    <div class="step" id="step4">
+                        <div class="step-dot"></div>
+                        <span>Enregistrement blockchain</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Receipt state -->
+            <div class="receipt-state" id="receiptState">
+
+                <!-- Header -->
+                <div class="receipt-header">
+                    {% if tx.status == 'success' %}
+                        <div class="status-icon success">✓</div>
+                        <h2>Transfert réussi !</h2>
+                        <p class="receipt-subtitle">Votre transaction a été traitée avec succès</p>
+                    {% else %}
+                        <div class="status-icon failed">✕</div>
+                        <h2>Transaction échouée</h2>
+                        <p class="receipt-subtitle">{{ tx.error|default:"Une erreur est survenue" }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Amount -->
+                <div class="amount-block">
+                    <div class="amount-label">Montant transféré</div>
+                    <div class="amount-value sent">- {{ tx.amount|fcfa }}</div>
+                </div>
+
+                <!-- Details -->
+                <div class="receipt-rows">
+                    <div class="receipt-row">
+                        <span class="row-label">Référence</span>
+                        <span class="row-value mono">#TXN-{{ tx.id }}</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="row-label">Expéditeur</span>
+                        <span class="row-value">{{ tx.sender_name }}</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="row-label">Destinataire</span>
+                        <span class="row-value">{{ tx.receiver_name }}</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="row-label">Date &amp; Heure</span>
+                        <span class="row-value">{{ tx.timestamp|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="row-label">Statut</span>
+                        <span class="row-value">
+                            {% if tx.status == 'success' %}
+                                <span class="badge success">✓ Confirmé</span>
+                            {% else %}
+                                <span class="badge failed">✕ Échoué</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if tx.new_balance is not None %}
+                    <div class="receipt-row">
+                        <span class="row-label">Nouveau solde</span>
+                        <span class="row-value">{{ tx.new_balance|fcfa }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if blockchain %}
+                <!-- Blockchain proof -->
+                <div class="blockchain-section">
+                    <p class="section-title">Preuve blockchain</p>
+                    <div class="receipt-rows">
+                        <div class="receipt-row">
+                            <span class="row-label">Réseau</span>
+                            <span class="row-value">Stellar</span>
+                        </div>
+                        <div class="receipt-row">
+                            <span class="row-label">Statut</span>
+                            <span class="row-value">
+                                {% if blockchain.status == 'CONFIRMED' %}
+                                    <span class="badge success">Confirmé</span>
+                                {% elif blockchain.status == 'PENDING' %}
+                                    <span class="badge pending">En attente</span>
+                                {% else %}
+                                    <span class="badge failed">Échoué</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if blockchain.status == 'CONFIRMED' and blockchain.stellar_transaction_hash %}
+                        <div class="receipt-row">
+                            <span class="row-label">Hash TX</span>
+                            <span class="row-value mono">{{ blockchain.stellar_transaction_hash|slice:":20" }}…</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Actions -->
+                <div class="receipt-actions">
+                    <button type="button" class="btn btn--print" onclick="window.print()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        Imprimer
+                    </button>
+                    <a href="{% url 'history' %}" class="btn btn--ghost">Historique</a>
+                    <a href="{% url 'transfer' %}" class="btn btn--primary">Nouveau transfert</a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+    // Animate the loading steps and then reveal the receipt
+    const steps = [
+        document.getElementById('step1'),
+        document.getElementById('step2'),
+        document.getElementById('step3'),
+        document.getElementById('step4'),
+    ];
+    const loadingState  = document.getElementById('loadingState');
+    const receiptState  = document.getElementById('receiptState');
+    const STEP_DELAY_MS = 600;
+
+    function runStep(index) {
+        if (index >= steps.length) {
+            // All steps done – show receipt
+            setTimeout(showReceipt, 300);
+            return;
+        }
+        const prev = steps[index - 1];
+        if (prev) {
+            prev.classList.remove('active');
+            prev.classList.add('done');
+        }
+        steps[index].classList.add('active');
+        setTimeout(() => runStep(index + 1), STEP_DELAY_MS);
+    }
+
+    function showReceipt() {
+        loadingState.style.display  = 'none';
+        receiptState.style.display  = 'block';
+    }
+
+    // Start animation
+    setTimeout(() => runStep(1), STEP_DELAY_MS);
+</script>
+</body>
+</html>

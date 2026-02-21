@@ -18,6 +18,7 @@ urlpatterns = [
     path('webhooks/mobile-money/', views.mobile_money_webhook, name='mobile_money_webhook'),
     path('api/recipient-name/', views.get_recipient_name, name='get_recipient_name'),
     path('api/recipient-info/', views.get_recipient_info, name='get_recipient_info'),
+    path('transaction/<int:tx_id>/receipt/', views.transaction_receipt, name='transaction_receipt'),
 
     # NFC Card Payment routes
     path('nfc/cards/', views.nfc_cards, name='nfc_cards'),

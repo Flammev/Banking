@@ -1,0 +1,406 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ═══════════════════════════════════════════
+   Rift Pay – Transaction Receipt Page
+   Dark theme · Mobile-first
+   ═══════════════════════════════════════════ */
+
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+    --bg:      #0f172a;
+    --surface: #1e293b;
+    --border:  #334155;
+    --text:    #f1f5f9;
+    --muted:   #94a3b8;
+    --accent:  #6366f1;
+    --accent2: #a78bfa;
+    --green:   #34d399;
+    --red:     #f87171;
+    --orange:  #fb923c;
+    --radius:  14px;
+    --shadow:  0 8px 32px rgba(0,0,0,.35);
+}
+
+html, body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ── Top Bar ── */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,23,42,.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+}
+.topbar-inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.brand {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -.5px;
+    color: #fff;
+    flex-shrink: 0;
+}
+.brand span { color: var(--accent2); }
+
+.nav {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.nav::-webkit-scrollbar { display: none; }
+.nav-link {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+    transition: color .2s, background .2s, transform .15s;
+}
+.nav-link:hover { color: #fff; background: rgba(255,255,255,.06); transform: translateY(-1px); }
+.nav-link.active { color: #fff; background: rgba(99,102,241,.3); }
+
+.logout-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(248,113,113,.12);
+    color: var(--red);
+    transition: background .2s, transform .15s;
+    margin-left: 6px;
+    text-decoration: none;
+}
+.logout-btn:hover { background: rgba(248,113,113,.22); transform: scale(1.08); }
+.logout-btn:active { transform: scale(.95); }
+
+/* ── Main ── */
+.main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 30px 10px 50px;
+}
+
+/* ── Receipt card ── */
+.receipt-card {
+    width: 100%;
+    max-width: 460px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 20px;
+    box-shadow: var(--shadow);
+    animation: slideUp .4s cubic-bezier(.22,1,.36,1);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Loading State ── */
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 0;
+    text-align: center;
+}
+
+.spinner-ring {
+    width: 64px;
+    height: 64px;
+    border: 4px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.loading-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: -12px;
+}
+
+.loading-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 260px;
+    margin-top: 4px;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--muted);
+    transition: color .3s;
+}
+
+.step.active { color: var(--text); }
+.step.done { color: var(--green); }
+
+.step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+    transition: background .3s;
+}
+
+.step.active .step-dot {
+    background: var(--accent);
+    box-shadow: 0 0 8px rgba(99,102,241,.5);
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.step.done .step-dot { background: var(--green); }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: .6; transform: scale(1.3); }
+}
+
+/* ── Receipt State (hidden initially) ── */
+.receipt-state { display: none; }
+
+.receipt-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 22px;
+    text-align: center;
+}
+
+.status-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.status-icon.success { background: rgba(52,211,153,.15); color: var(--green); }
+.status-icon.failed  { background: rgba(248,113,113,.15); color: var(--red); }
+
+.receipt-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.receipt-header .receipt-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* Amount block */
+.amount-block {
+    text-align: center;
+    padding: 16px;
+    background: rgba(99,102,241,.08);
+    border: 1px solid rgba(99,102,241,.18);
+    border-radius: 12px;
+    margin-bottom: 22px;
+}
+.amount-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+.amount-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+}
+.amount-value.sent   { color: var(--red); }
+.amount-value.received { color: var(--green); }
+
+/* Receipt rows */
+.receipt-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 22px;
+}
+
+.receipt-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 11px 14px;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+}
+.receipt-row:last-child { border-bottom: none; }
+
+.row-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: var(--muted);
+    flex-shrink: 0;
+    padding-top: 1px;
+}
+
+.row-value {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    text-align: right;
+    word-break: break-all;
+}
+
+.row-value.mono {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--muted);
+}
+
+/* Status badge */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+.badge.success { background: rgba(52,211,153,.15); color: var(--green); }
+.badge.failed  { background: rgba(248,113,113,.15); color: var(--red); }
+.badge.pending { background: rgba(251,146,60,.15);  color: var(--orange); }
+
+/* Blockchain proof */
+.blockchain-section {
+    margin-bottom: 22px;
+}
+.section-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .7px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+/* Action buttons */
+.receipt-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 11px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: opacity .2s, transform .15s, box-shadow .2s;
+    border: none;
+    font-family: inherit;
+}
+.btn:active { transform: scale(.97); }
+
+.btn--primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(99,102,241,.3);
+}
+.btn--primary:hover { opacity: .88; box-shadow: 0 6px 20px rgba(99,102,241,.4); }
+
+.btn--ghost {
+    background: rgba(255,255,255,.05);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+.btn--ghost:hover { background: rgba(255,255,255,.09); }
+
+.btn--print {
+    background: rgba(52,211,153,.1);
+    color: var(--green);
+    border: 1px solid rgba(52,211,153,.2);
+}
+.btn--print:hover { background: rgba(52,211,153,.18); }
+
+/* Print styles */
+@media print {
+    .topbar, .receipt-actions, .loading-state { display: none !important; }
+    .receipt-card { box-shadow: none; border: 1px solid #ccc; }
+    body { background: white; color: black; }
+    .receipt-state { display: block !important; }
+}
+
+@media (max-width: 480px) {
+    .receipt-actions { flex-direction: column; }
+    .btn { min-width: unset; }
+}
