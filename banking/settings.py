@@ -57,17 +57,27 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'banking.urls'
 
+_TEMPLATE_LOADERS = [
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
+]
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [BASE_DIR / 'banking' / 'templates'],
-        'APP_DIRS': True,
+        'APP_DIRS': False,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'loaders': (
+                _TEMPLATE_LOADERS
+                if DEBUG
+                else [('django.template.loaders.cached.Loader', _TEMPLATE_LOADERS)]
+            ),
         },
     },
 ]
