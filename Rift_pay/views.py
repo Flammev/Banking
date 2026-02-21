@@ -21,6 +21,10 @@ import random
 from .models import User, Transaction, Account, Card, SystemActivity, BlockchainProof, MobileMoneyTransaction, NFCCard, NFCTerminal, NFCPaymentTransaction, EmailOTP
 from .services.blockchain_client import sync_transaction, BlockchainSyncError
 from .services.mobile_money_client import initiate_mobile_money_transaction, MobileMoneyAPIError
+from .validators import (
+    is_valid_name, is_valid_email, is_valid_phone, is_valid_password,
+    is_valid_account_number, is_valid_otp, is_safe_text,
+)
 
 
 def get_client_ip(request):
@@ -99,12 +103,33 @@ def sanitize_error_message(message):
 
 def register(request):
     if request.method == 'POST':
-        name = request.POST['name']
-        prenom = request.POST['prenom']
-        email = request.POST['email']
-        password = request.POST['password']
-        confirm_password = request.POST.get('confirm_password')
-        phone = request.POST['phone']
+        name = request.POST.get('name', '').strip()
+        prenom = request.POST.get('prenom', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+        phone = request.POST.get('phone', '').strip()
+
+        if not is_valid_name(name):
+            return render(request, 'register.html', {
+                'message': 'First name must contain only letters, spaces, hyphens, or apostrophes (1–100 characters)'
+            })
+
+        if not is_valid_name(prenom):
+            return render(request, 'register.html', {
+                'message': 'Last name must contain only letters, spaces, hyphens, or apostrophes (1–100 characters)'
+            })
+
+        if not is_valid_email(email):
+            return render(request, 'register.html', {'message': 'Please enter a valid email address'})
+
+        if not is_valid_phone(phone):
+            return render(request, 'register.html', {'message': 'Please enter a valid phone number'})
+
+        if not is_valid_password(password):
+            return render(request, 'register.html', {
+                'message': 'Password must be at least 8 characters and include at least one letter and one digit'
+            })
 
         if password != confirm_password:
             log_activity(request, action='REGISTER', status='FAILED', detail=f"Password mismatch for email {email}")
@@ -262,28 +287,44 @@ def transfer(request):
     if request.method == 'POST':
         try:
             lookup_type = request.POST.get('lookup_type', 'email')
-            lookup_value = request.POST.get('recipient_lookup')
+            lookup_value = request.POST.get('recipient_lookup', '').strip()
             receiver_id = request.POST.get('receiver_id')
             amount = request.POST.get('amount')
-            description = request.POST.get('description', '')
-            
+            description = request.POST.get('description', '').strip()
+
             # Validate inputs
             if not lookup_value or not amount:
                 log_activity(request, action='TRANSFER', status='FAILED', detail='Missing recipient or amount')
                 return respond_error('Recipient and amount are required')
-            
+
+            # Validate lookup value format based on the selected type
+            if lookup_type == 'email' and not is_valid_email(lookup_value):
+                log_activity(request, action='TRANSFER', status='FAILED', detail=f'Invalid email format for recipient: {lookup_value}')
+                return respond_error('Please enter a valid email address')
+            elif lookup_type == 'phone' and not is_valid_phone(lookup_value):
+                log_activity(request, action='TRANSFER', status='FAILED', detail=f'Invalid phone format for recipient: {lookup_value}')
+                return respond_error('Please enter a valid phone number')
+            elif lookup_type == 'account' and not is_valid_account_number(lookup_value):
+                log_activity(request, action='TRANSFER', status='FAILED', detail=f'Invalid account number format: {lookup_value}')
+                return respond_error('Please enter a valid account number (e.g. ACC1234567890)')
+
+            # Validate description for injection attempts
+            if description and not is_safe_text(description):
+                log_activity(request, action='TRANSFER', status='FAILED', detail='Malicious content detected in transfer description')
+                return respond_error('Description contains invalid content')
+
             # Convert amount to Decimal
             try:
                 amount = Decimal(amount)
             except:
                 log_activity(request, action='TRANSFER', status='FAILED', detail=f'Invalid amount format: {amount}')
                 return respond_error('Invalid amount format')
-            
+
             # Validate amount is positive
             if amount <= 0:
                 log_activity(request, action='TRANSFER', status='FAILED', detail=f'Non-positive amount: {amount}')
                 return respond_error('Amount must be greater than 0')
-            
+
             # Get receiver user based on lookup type
             receiver = None
             if receiver_id:
@@ -449,22 +490,30 @@ def get_recipient_info(request):
     """AJAX endpoint to fetch recipient info by email, phone, or account number"""
     if request.method == 'GET':
         lookup_type = request.GET.get('type', 'email')
-        lookup_value = request.GET.get('value', '')
-        
+        lookup_value = request.GET.get('value', '').strip()
+
+        # Validate the lookup value format before querying the database
+        if lookup_type == 'email':
+            if not is_valid_email(lookup_value):
+                return JsonResponse({'success': False, 'error': 'Invalid email format'})
+        elif lookup_type == 'phone':
+            if not is_valid_phone(lookup_value):
+                return JsonResponse({'success': False, 'error': 'Invalid phone number format'})
+        elif lookup_type == 'account':
+            if not is_valid_account_number(lookup_value):
+                return JsonResponse({'success': False, 'error': 'Invalid account number format'})
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid lookup type'})
+
         try:
             if lookup_type == 'email':
                 user = User.objects.get(email=lookup_value)
             elif lookup_type == 'phone':
                 user = User.objects.get(phone=lookup_value)
-            elif lookup_type == 'account':
+            else:  # account
                 account = Account.objects.get(number=lookup_value)
                 user = account.user
-            else:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Invalid lookup type'
-                })
-            
+
             return JsonResponse({
                 'success': True,
                 'name': f"{user.name} {user.prenom}",
@@ -475,7 +524,7 @@ def get_recipient_info(request):
                 'success': False,
                 'error': 'User not found'
             })
-    
+
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 def home(request):
@@ -652,6 +701,26 @@ def update_profile(request):
     if not name or not prenom or not email or not phone:
         log_activity(request, action='PROFILE_UPDATE', status='FAILED', user=user, detail='Missing required profile fields')
         params = urlencode({'error': 'All profile fields are required'})
+        return redirect(f"{reverse('home')}?{params}")
+
+    if not is_valid_name(name):
+        log_activity(request, action='PROFILE_UPDATE', status='FAILED', user=user, detail='Invalid first name format')
+        params = urlencode({'error': 'First name contains invalid characters'})
+        return redirect(f"{reverse('home')}?{params}")
+
+    if not is_valid_name(prenom):
+        log_activity(request, action='PROFILE_UPDATE', status='FAILED', user=user, detail='Invalid last name format')
+        params = urlencode({'error': 'Last name contains invalid characters'})
+        return redirect(f"{reverse('home')}?{params}")
+
+    if not is_valid_email(email):
+        log_activity(request, action='PROFILE_UPDATE', status='FAILED', user=user, detail='Invalid email format')
+        params = urlencode({'error': 'Please enter a valid email address'})
+        return redirect(f"{reverse('home')}?{params}")
+
+    if not is_valid_phone(phone):
+        log_activity(request, action='PROFILE_UPDATE', status='FAILED', user=user, detail='Invalid phone format')
+        params = urlencode({'error': 'Please enter a valid phone number'})
         return redirect(f"{reverse('home')}?{params}")
 
     email_owner = User.objects.filter(email=email).exclude(user_id=user.user_id).first()

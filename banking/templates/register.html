@@ -24,7 +24,10 @@
                     <div class="form-group">
                         <label for="name" class="form-label">First Name</label>
                         <div class="input-wrapper">
-                            <input type="text" id="name" name="name" required class="form-input" placeholder="Enter first name">
+                            <input type="text" id="name" name="name" required class="form-input" placeholder="Enter first name"
+                                   pattern="[A-Za-zÀ-ÖØ-öø-ÿ'\- ]{1,100}"
+                                   title="Letters, spaces, hyphens, and apostrophes only"
+                                   maxlength="100">
                             <span class="icon"><ion-icon name="person-outline"></ion-icon></span>
                         </div>
                     </div>
@@ -32,7 +35,10 @@
                     <div class="form-group">
                         <label for="prenom" class="form-label">Last Name</label>
                         <div class="input-wrapper">
-                            <input type="text" id="prenom" name="prenom" required class="form-input" placeholder="Enter last name">
+                            <input type="text" id="prenom" name="prenom" required class="form-input" placeholder="Enter last name"
+                                   pattern="[A-Za-zÀ-ÖØ-öø-ÿ'\- ]{1,100}"
+                                   title="Letters, spaces, hyphens, and apostrophes only"
+                                   maxlength="100">
                             <span class="icon"><ion-icon name="person-outline"></ion-icon></span>
                         </div>
                     </div>
@@ -41,7 +47,8 @@
                 <div class="form-group">
                     <label for="email" class="form-label">Email Address</label>
                     <div class="input-wrapper">
-                        <input type="email" id="email" name="email" required class="form-input" placeholder="Enter your email">
+                        <input type="email" id="email" name="email" required class="form-input" placeholder="Enter your email"
+                               maxlength="254">
                         <span class="icon"><ion-icon name="mail-outline"></ion-icon></span>
                     </div>
                 </div>
@@ -49,7 +56,10 @@
                 <div class="form-group">
                     <label for="phone" class="form-label">Phone Number</label>
                     <div class="input-wrapper">
-                        <input type="tel" id="phone" name="phone" required class="form-input" placeholder="Enter phone number">
+                        <input type="tel" id="phone" name="phone" required class="form-input" placeholder="Enter phone number"
+                               pattern="\+?[\d\s\-\(\)]{8,20}"
+                               title="Enter a valid phone number (8–20 characters, digits, spaces, hyphens, parentheses)"
+                               maxlength="20">
                         <span class="icon"><ion-icon name="call-outline"></ion-icon></span>
                     </div>
                 </div>
@@ -58,7 +68,8 @@
                     <div class="form-group">
                         <label for="password" class="form-label">Password</label>
                         <div class="input-wrapper">
-                            <input type="password" id="password" name="password" required class="form-input" placeholder="Create a password">
+                            <input type="password" id="password" name="password" required class="form-input" placeholder="Create a password"
+                                   minlength="8" maxlength="128">
                             <span class="icon"><ion-icon name="lock-closed-outline"></ion-icon></span>
                         </div>
                         <small class="password-hint">Minimum 8 characters, include numbers and special characters</small>
@@ -67,7 +78,8 @@
                     <div class="form-group">
                         <label for="confirm_password" class="form-label">Confirm Password</label>
                         <div class="input-wrapper">
-                            <input type="password" id="confirm_password" name="confirm_password" required class="form-input" placeholder="Confirm password">
+                            <input type="password" id="confirm_password" name="confirm_password" required class="form-input" placeholder="Confirm password"
+                                   minlength="8" maxlength="128">
                             <span class="icon"><ion-icon name="lock-closed-outline"></ion-icon></span>
                         </div>
                     </div>
