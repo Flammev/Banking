@@ -438,6 +438,7 @@ def transfer(request):
                 'available_balance': sender_account.balance
             }
 
+            receipt_url = reverse('transaction_receipt', args=[transfer_tx.id])
             if wants_json():
                 return JsonResponse(
                     {
@@ -445,10 +446,11 @@ def transfer(request):
                         'message': context['success'],
                         'transaction_id': transfer_tx.id,
                         'available_balance': float(sender_account.balance),
+                        'receipt_url': receipt_url,
                     }
                 )
 
-            return render(request, 'transfer.html', context)
+            return redirect(receipt_url)
 
         except BlockchainSyncError as e:
             log_activity(
@@ -466,6 +468,37 @@ def transfer(request):
     
     # GET request - display transfer form
     return render(request, 'transfer.html', build_context())
+
+def transaction_receipt(request, tx_id):
+    """Display a transaction processing animation and receipt for a completed transfer."""
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('login')
+
+    try:
+        transfer_tx = Transaction.objects.select_related('sender', 'receiver').get(id=tx_id)
+    except Transaction.DoesNotExist:
+        return redirect('history')
+
+    # Only the sender may view the receipt
+    if transfer_tx.sender.user_id != user_id:
+        return redirect('history')
+
+    sender_account = Account.objects.filter(user=transfer_tx.sender).first()
+    blockchain = BlockchainProof.objects.filter(local_transaction_id=tx_id).first()
+
+    tx = {
+        'id': transfer_tx.id,
+        'status': 'success',
+        'amount': transfer_tx.amount,
+        'sender_name': f"{transfer_tx.sender.name} {transfer_tx.sender.prenom}",
+        'receiver_name': f"{transfer_tx.receiver.name} {transfer_tx.receiver.prenom}",
+        'timestamp': transfer_tx.timestamp,
+        'new_balance': sender_account.balance if sender_account else None,
+    }
+
+    return render(request, 'transaction_receipt.html', {'tx': tx, 'blockchain': blockchain})
+
 
 def get_recipient_name(request):
     """AJAX endpoint to fetch recipient name by email"""

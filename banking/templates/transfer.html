@@ -271,6 +271,11 @@
                         updateBalanceDisplay(data.available_balance);
                         return;
                     }
+                    // Redirect to the transaction receipt / processing page
+                    if (data.receipt_url) {
+                        window.location.href = data.receipt_url;
+                        return;
+                    }
                     renderFlash('success', data.message || 'Transfert effectué avec succès');
                     updateBalanceDisplay(data.available_balance);
                     transferForm.reset();
