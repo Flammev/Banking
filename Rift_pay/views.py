@@ -173,8 +173,8 @@ def register(request):
 
 def login(request):
     if request.method == 'POST':
-        email = request.POST['email']
-        password = request.POST['password']
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
 
         try:
             user = User.objects.get(email=email)
