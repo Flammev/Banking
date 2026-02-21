@@ -27,13 +27,13 @@
                 {% csrf_token %}
                 
                 <div class="input-wrapper">
-                    <input type="email" id="email" name="email" required placeholder="Enter your email">
+                    <input type="email" id="email" name="email" required placeholder="Enter your email" maxlength="254">
                     <span class="icon"><ion-icon name="mail-outline"></ion-icon></span>
                     <label for="email" class="form-label">Email Address</label>
                 </div>
                 
                 <div class="input-wrapper">
-                    <input type="password" id="password" name="password" required placeholder="Enter your password">
+                    <input type="password" id="password" name="password" required placeholder="Enter your password" maxlength="128">
                     <span class="icon"><ion-icon name="lock-closed-outline"></ion-icon></span>
                     <label for="password" class="form-label">Password</label>
                 </div>
