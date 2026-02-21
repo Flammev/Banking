@@ -407,9 +407,10 @@ def transfer(request):
                     )
                     receiver_account.save()
 
-                # Sync transaction with Stellar backend
+            # Sync with Stellar backend outside the atomic block so a blockchain
+            # failure does not roll back the already-committed balance changes.
+            try:
                 sync_data = sync_transaction(transfer_tx)
-
                 BlockchainProof.objects.update_or_create(
                     reference_id=sync_data['reference_id'],
                     defaults={
@@ -422,15 +423,37 @@ def transfer(request):
                         'synced_at': timezone.now() if sync_data.get('stellar_transaction_hash') else None,
                     }
                 )
+                log_activity(
+                    request,
+                    action='TRANSFER',
+                    status='SUCCESS',
+                    user=sender,
+                    detail=f'Transfer #{transfer_tx.id} sent to user {receiver.user_id} for {amount}'
+                )
+            except BlockchainSyncError as e:
+                # The local transfer has already been committed; record the proof
+                # as PENDING so it can be reconciled later via the webhook.
+                # Use "local-" prefix (distinct from sync_transaction's "tx-" prefix)
+                # to avoid any reference_id collision.
+                BlockchainProof.objects.update_or_create(
+                    reference_id=f"local-{transfer_tx.id}",
+                    defaults={
+                        'stellar_transaction_hash': f"unsynced-{transfer_tx.id}",
+                        'proof_hash': f"unsynced-proof-{transfer_tx.id}",
+                        'status': 'PENDING',
+                        'local_transaction_id': transfer_tx.id,
+                        'amount': float(transfer_tx.amount),
+                        'currency': 'FCFA',
+                    }
+                )
+                log_activity(
+                    request,
+                    action='TRANSFER',
+                    status='SUCCESS',
+                    user=sender,
+                    detail=f'Transfer #{transfer_tx.id} completed (blockchain sync pending: {str(e)})'
+                )
 
-            log_activity(
-                request,
-                action='TRANSFER',
-                status='SUCCESS',
-                user=sender,
-                detail=f'Transfer #{transfer_tx.id} sent to user {receiver.user_id} for {amount}'
-            )
-            
             # Success response
             context = {
                 'success': f'Transfer of {amount} FCFA to {receiver.name} {receiver.prenom} completed successfully!',
@@ -452,16 +475,6 @@ def transfer(request):
 
             return redirect(receipt_url)
 
-        except BlockchainSyncError as e:
-            log_activity(
-                request,
-                action='TRANSFER',
-                status='FAILED',
-                user=sender if 'sender' in locals() else None,
-                detail=f'Blockchain sync failed: {str(e)}'
-            )
-            return respond_error(f'Transfer cancelled: blockchain sync failed ({str(e)})', status=502)
-        
         except Exception as e:
             log_activity(request, action='TRANSFER', status='FAILED', detail=f'Unhandled transfer error: {str(e)}')
             return respond_error('An internal error occurred while processing the transfer', status=500)
@@ -574,16 +587,8 @@ def home(request):
         'recent_operations': []
     }
     
-    # If no user_id in session, try to get from all users (for development)
     if not user_id:
-        # In production, should redirect to login
-        # For now, get the most recent user (temporary solution)
-        try:
-            user = User.objects.latest('user_id')
-            request.session['user_id'] = user.user_id
-            request.session.save()
-        except User.DoesNotExist:
-            return redirect('login')
+        return redirect('login')
     else:
         try:
             user = User.objects.get(user_id=user_id)
